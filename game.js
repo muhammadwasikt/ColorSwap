@@ -1,7 +1,7 @@
 (() => {
 "use strict";
 const COLORS=["red","yellow","green","blue","purple","cyan"], LEVEL_COUNT=100, SAVE_KEY="chromatic-shift-save-v2", MAX_MISTAKES=3;
-const state={screen:"home",currentLevel:1,board:[],selected:null,score:0,moves:0,target:0,cleared:0,combo:0,mistakes:0,busy:false,boosterMode:null,pendingBooster:null,save:loadSave()};
+const state={screen:"home",currentLevel:1,board:[],selected:null,score:0,moves:0,target:0,cleared:0,successfulMoves:0,minSuccessfulMoves:0,combo:0,mistakes:0,busy:false,boosterMode:null,pendingBooster:null,save:loadSave()};
 const $=id=>document.getElementById(id);
 const el={home:$("homeScreen"),map:$("mapScreen"),game:$("gameScreen"),result:$("resultScreen"),back:$("backButton"),play:$("playButton"),levelMap:$("levelMap"),board:$("board"),coin:$("coinCount"),homeLevel:$("homeLevel"),homeStars:$("homeStars"),homeBest:$("homeBest"),mapProgress:$("mapProgress"),level:$("levelNumber"),objective:$("objectiveText"),score:$("scoreValue"),objectiveLabel:$("objectiveLabel"),objectiveValue:$("objectiveValue"),bar:$("objectiveBar"),moves:$("movesValue"),mistakes:$("mistakesValue"),resultBadge:$("resultBadge"),resultTitle:$("resultTitle"),resultStars:$("resultStars"),resultScore:$("resultScore"),resultCoins:$("resultCoins"),resultBest:$("resultBest"),next:$("nextLevelButton"),replay:$("replayButton"),mapButton:$("mapButton"),toast:$("toast"),tutorial:$("tutorial"),tutorialButton:$("tutorialButton"),shuffle:$("shuffleCount"),hammer:$("hammerCount"),bomb:$("colorBombCount"),boosterModal:$("boosterModal"),boosterTitle:$("boosterModalTitle"),boosterText:$("boosterModalText"),boosterConfirm:$("boosterConfirm"),boosterCancel:$("boosterCancel")};
 
@@ -13,10 +13,11 @@ function wait(ms){return new Promise(r=>setTimeout(r,ms));}
 function toast(msg){el.toast.textContent=msg;el.toast.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>el.toast.classList.remove("show"),1500);}
 
 function config(level){
- const colors=level<=15?4:level<=40?5:6;
- const moves=Math.max(22,34-Math.floor((level-1)/12)*2);
- const target=60+Math.floor(level*1.65);
- return{level,size:8,colors,moves,target,difficulty:level<=10?"Warm-up":level<=30?"Flow":level<=60?"Focus":level<=85?"Expert":"Master"};
+ const colors=level<=12?4:level<=30?5:6;
+ const moves=Math.max(22,32-Math.floor((level-1)/10)*2);
+ const minSuccessfulMoves=Math.min(moves-2,20+Math.floor(level/8));
+ const target=78+Math.floor(level*1.8);
+ return{level,size:8,colors,moves,target,minSuccessfulMoves,difficulty:level<=10?"Warm-up":level<=30?"Flow":level<=60?"Focus":level<=85?"Expert":"Master"};
 }
 function rng(seed){let t=seed>>>0;return()=>{t+=0x6D2B79F5;let x=t;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return((x^(x>>>14))>>>0)/4294967296;};}
 function createsMatch(board,color,size,index){const x=index%size,y=Math.floor(index/size);return(x>=2&&board[index-1]===color&&board[index-2]===color)||(y>=2&&board[index-size]===color&&board[index-size*2]===color);}
@@ -62,8 +63,8 @@ async function tileClick(i){
  state.busy=false;toast("Wrong swap! "+(MAX_MISTAKES-state.mistakes)+" left.");
  return;
 }
- state.moves--;state.combo=0;await resolve(found);state.busy=false;updateGame();
- if(state.cleared>=state.target)finish(true);else if(state.moves<=0)finish(false);
+ state.moves--;state.successfulMoves++;state.combo=0;await resolve(found);state.busy=false;updateGame();
+ if(state.cleared>=state.target&&state.successfulMoves>=state.minSuccessfulMoves)finish(true);else if(state.moves<=0)finish(false);
 }
 async function resolve(found){
  while(found.length){
@@ -86,11 +87,11 @@ async function resolve(found){
 }
 function updateGame(){
  const cfg=config(state.currentLevel),ratio=Math.min(1,state.cleared/state.target);
- el.level.textContent=state.currentLevel;el.objective.textContent="Clear "+state.target+" tiles";el.objectiveLabel.textContent="TARGET";el.objectiveValue.textContent=Math.min(state.cleared,state.target)+" / "+state.target;el.bar.style.width=(ratio*100)+"%";el.score.textContent=state.score.toLocaleString();el.moves.textContent=state.moves;el.mistakes.textContent=state.mistakes+" / "+MAX_MISTAKES;el.coin.textContent=state.save.coins;el.shuffle.textContent=state.save.boosters.shuffle;el.hammer.textContent=state.save.boosters.hammer;el.bomb.textContent=state.save.boosters.colorbomb;
+ el.level.textContent=state.currentLevel;const targetDone=state.cleared>=state.target,moveGoalDone=state.successfulMoves>=state.minSuccessfulMoves;el.objective.textContent=targetDone&&moveGoalDone?"LEVEL GOAL COMPLETE":"Clear "+state.target+" tiles + "+state.minSuccessfulMoves+" good swaps";el.objectiveLabel.textContent=targetDone?"SWAPS":"TARGET";el.objectiveValue.textContent=targetDone?Math.min(state.successfulMoves,state.minSuccessfulMoves)+" / "+state.minSuccessfulMoves:Math.min(state.cleared,state.target)+" / "+state.target;const progress=targetDone?Math.min(1,state.successfulMoves/state.minSuccessfulMoves):ratio;el.bar.style.width=(progress*100)+"%";el.score.textContent=state.score.toLocaleString();el.moves.textContent=state.moves;el.mistakes.textContent=state.mistakes+" / "+MAX_MISTAKES;el.coin.textContent=state.save.coins;el.shuffle.textContent=state.save.boosters.shuffle;el.hammer.textContent=state.save.boosters.hammer;el.bomb.textContent=state.save.boosters.colorbomb;
 }
 function startLevel(level){
  if(level<1||level>LEVEL_COUNT||level>state.save.unlocked)return;
- const cfg=config(level);state.currentLevel=level;state.board=makeBoard(cfg);state.selected=null;state.score=0;state.moves=cfg.moves;state.target=cfg.target;state.cleared=0;state.combo=0;state.mistakes=0;state.busy=false;state.boosterMode=null;showScreen("game");updateGame();renderBoard();
+ const cfg=config(level);state.currentLevel=level;state.board=makeBoard(cfg);state.selected=null;state.score=0;state.moves=cfg.moves;state.target=cfg.target;state.cleared=0;state.successfulMoves=0;state.minSuccessfulMoves=cfg.minSuccessfulMoves;state.combo=0;state.mistakes=0;state.busy=false;state.boosterMode=null;showScreen("game");updateGame();renderBoard();
 }
 function finish(won){
  if(state.busy)return;
@@ -127,7 +128,7 @@ function useBooster(type){
 function useBoosterOnTile(index){
  const type=state.boosterMode;if(!type)return;
  if(type==="hammer"){state.board[index]=COLORS[Math.floor(Math.random()*config(state.currentLevel).colors)];state.boosterMode=null;renderBoard();playSound("booster");toast("Tile removed.");}
- else{const color=state.board[index],removed=state.board.filter(c=>c===color).length;state.board=state.board.map(c=>c===color?null:c);const next=new Array(64),count=config(state.currentLevel).colors;for(let x=0;x<8;x++){const col=[];for(let y=7;y>=0;y--){const v=state.board[y*8+x];if(v)col.push(v);}while(col.length<8)col.push(COLORS[Math.floor(Math.random()*count)]);for(let y=7;y>=0;y--)next[y*8+x]=col[7-y];}state.board=next;state.cleared+=removed;state.score+=removed*100;state.boosterMode=null;renderBoard();updateGame();playSound("booster");toast("Color cleared.");if(state.cleared>=state.target)finish(true);}
+ else{const color=state.board[index],removed=state.board.filter(c=>c===color).length;state.board=state.board.map(c=>c===color?null:c);const next=new Array(64),count=config(state.currentLevel).colors;for(let x=0;x<8;x++){const col=[];for(let y=7;y>=0;y--){const v=state.board[y*8+x];if(v)col.push(v);}while(col.length<8)col.push(COLORS[Math.floor(Math.random()*count)]);for(let y=7;y>=0;y--)next[y*8+x]=col[7-y];}state.board=next;state.cleared+=removed;state.score+=removed*100;state.boosterMode=null;renderBoard();updateGame();playSound("booster");toast("Color cleared.");if(state.cleared>=state.target&&state.successfulMoves>=state.minSuccessfulMoves)finish(true);}
 }
 el.play.addEventListener("click",showMap);el.back.addEventListener("click",showMap);el.mapButton.addEventListener("click",showMap);el.replay.addEventListener("click",()=>startLevel(state.currentLevel));el.next.addEventListener("click",()=>state.currentLevel<LEVEL_COUNT&&state.save.unlocked>state.currentLevel?startLevel(state.currentLevel+1):showMap());
 el.tutorialButton.addEventListener("click",()=>{state.save.tutorialSeen=true;save();el.tutorial.classList.add("hidden");});
