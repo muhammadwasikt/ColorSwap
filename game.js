@@ -42,9 +42,25 @@ function playSound(type){
  try{
   const C=window.AudioContext||window.webkitAudioContext,ctx=state.audioCtx||(state.audioCtx=new C());
   if(ctx.state==="suspended")ctx.resume();
-  const o=ctx.createOscillator(),g=ctx.createGain(),now=ctx.currentTime;
-  const sets={tap:[420,.045,"sine"],swap:[250,.07,"triangle"],match:[620,.11,"sine"],combo:[880,.16,"triangle"],win:[523,.13,"sine"],fail:[180,.18,"sawtooth"],booster:[720,.12,"square"]};
-  const s=sets[type]||sets.tap;o.type=s[2];o.frequency.setValueAtTime(s[0],now);o.frequency.exponentialRampToValueAtTime(s[0]*1.25,now+s[1]);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.055,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+s[1]);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+s[1]+.02);
+  const master=ctx.createGain();master.gain.value=.18;master.connect(ctx.destination);
+  const presets={
+   tap:[[420,.055,"sine",0]],
+   swap:[[260,.08,"triangle",0],[390,.06,"sine",.025]],
+   match:[[520,.09,"sine",0],[780,.11,"sine",.035]],
+   combo:[[620,.10,"triangle",0],[930,.12,"sine",.05],[1240,.14,"sine",.10]],
+   win:[[523,.14,"sine",0],[659,.16,"sine",.10],[784,.22,"triangle",.22],[1047,.30,"sine",.36]],
+   fail:[[220,.14,"sawtooth",0],[150,.24,"triangle",.08]],
+   booster:[[700,.10,"square",0],[980,.14,"triangle",.07]]
+  };
+  const now=ctx.currentTime,notes=presets[type]||presets.tap;
+  notes.forEach(([freq,dur,wave,delay])=>{
+   const o=ctx.createOscillator(),g=ctx.createGain(),t=now+delay;
+   o.type=wave;o.frequency.setValueAtTime(freq,t);
+   o.frequency.exponentialRampToValueAtTime(freq*1.35,t+dur);
+   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.9,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+   o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.03);
+  });
+  if(navigator.vibrate)navigator.vibrate(type==="match"?10:type==="combo"?[10,20,15]:type==="win"?[15,35,25]:type==="fail"?35:6);
  }catch(e){}
 }
 async function tileClick(i){
