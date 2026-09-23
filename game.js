@@ -34,13 +34,23 @@ function renderBoard(){
  el.board.innerHTML="";
  state.board.forEach((color,i)=>{const b=document.createElement("button");b.className="tile"+(state.selected===i?" selected":"");b.dataset.color=color;b.setAttribute("aria-label","Tile "+(i+1)+", "+color);b.addEventListener("click",()=>tileClick(i));el.board.appendChild(b);});
 }
+function playSound(type){
+ if(!window.AudioContext&&!window.webkitAudioContext)return;
+ try{
+  const C=window.AudioContext||window.webkitAudioContext,ctx=state.audioCtx||(state.audioCtx=new C());
+  if(ctx.state==="suspended")ctx.resume();
+  const o=ctx.createOscillator(),g=ctx.createGain(),now=ctx.currentTime;
+  const sets={tap:[420,.045,"sine"],swap:[250,.07,"triangle"],match:[620,.11,"sine"],combo:[880,.16,"triangle"],win:[523,.13,"sine"],fail:[180,.18,"sawtooth"],booster:[720,.12,"square"]};
+  const s=sets[type]||sets.tap;o.type=s[2];o.frequency.setValueAtTime(s[0],now);o.frequency.exponentialRampToValueAtTime(s[0]*1.25,now+s[1]);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.055,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+s[1]);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+s[1]+.02);
+ }catch(e){}
+}
 async function tileClick(i){
  if(state.busy)return;
  if(state.boosterMode){useBoosterOnTile(i);return;}
- if(state.selected===null){state.selected=i;renderBoard();return;}
+ if(state.selected===null){state.selected=i;playSound("tap");renderBoard();return;}
  if(i===state.selected){state.selected=null;renderBoard();return;}
  if(!adjacent(state.selected,i)){state.selected=i;renderBoard();return;}
- const a=state.selected,b=i;state.selected=null;state.busy=true;[state.board[a],state.board[b]]=[state.board[b],state.board[a]];renderBoard();await wait(90);
+ const a=state.selected,b=i;state.selected=null;state.busy=true;playSound("swap");[state.board[a],state.board[b]]=[state.board[b],state.board[a]];renderBoard();await wait(90);
  let found=matches(state.board);
  if(!found.length){[state.board[a],state.board[b]]=[state.board[b],state.board[a]];renderBoard();state.busy=false;toast("Swap a tile that creates a match.");return;}
  state.moves--;state.combo=0;await resolve(found);state.busy=false;updateGame();
@@ -49,6 +59,7 @@ async function tileClick(i){
 async function resolve(found){
  while(found.length){
   state.combo++;
+  playSound(state.combo>=2?"combo":"match");
   state.cleared+=found.length;
   state.score+=found.length*100*state.combo;
   found.forEach(i=>{if(el.board.children[i])el.board.children[i].classList.add("clearing");});
@@ -73,7 +84,8 @@ function startLevel(level){
  const cfg=config(level);state.currentLevel=level;state.board=makeBoard(cfg);state.selected=null;state.score=0;state.moves=cfg.moves;state.target=cfg.target;state.cleared=0;state.combo=0;state.busy=false;state.boosterMode=null;showScreen("game");updateGame();renderBoard();
 }
 function finish(won){
- if(state.busy)return;state.busy=true;
+ if(state.busy)return;
+ playSound(won?"win":"fail");state.busy=true;
  const cfg=config(state.currentLevel),stars=won?(state.moves>=Math.ceil(cfg.moves*.35)?3:state.moves>=Math.ceil(cfg.moves*.15)?2:1):0,best=Math.max(state.save.best[state.currentLevel]||0,state.score),reward=won?25+stars*15+Math.min(40,state.combo*3):0;
  if(won){state.save.stars[state.currentLevel]=Math.max(state.save.stars[state.currentLevel]||0,stars);state.save.best[state.currentLevel]=best;state.save.unlocked=Math.max(state.save.unlocked,Math.min(LEVEL_COUNT,state.currentLevel+1));state.save.coins+=reward;if(stars===3)state.save.boosters.shuffle=Math.min(5,state.save.boosters.shuffle+1);save();}
  setTimeout(()=>{state.busy=false;showResult(won,stars,best,reward);},300);
@@ -105,8 +117,8 @@ function useBooster(type){
 }
 function useBoosterOnTile(index){
  const type=state.boosterMode;if(!type)return;
- if(type==="hammer"){state.board[index]=COLORS[Math.floor(Math.random()*config(state.currentLevel).colors)];state.boosterMode=null;renderBoard();toast("Tile removed.");}
- else{const color=state.board[index],before=state.cleared;state.board=state.board.map(c=>c===color?null:c);const next=new Array(64),count=config(state.currentLevel).colors;for(let x=0;x<8;x++){const col=[];for(let y=7;y>=0;y--){const v=state.board[y*8+x];if(v)col.push(v);}while(col.length<8)col.push(COLORS[Math.floor(Math.random()*count)]);for(let y=7;y>=0;y--)next[y*8+x]=col[7-y];}state.board=next;state.cleared+=Math.max(1,state.board.length?8:0);state.score+=800;state.boosterMode=null;renderBoard();updateGame();toast("Color cleared.");if(state.cleared>=state.target)finish(true);}
+ if(type==="hammer"){state.board[index]=COLORS[Math.floor(Math.random()*config(state.currentLevel).colors)];state.boosterMode=null;renderBoard();playSound("booster");toast("Tile removed.");}
+ else{const color=state.board[index],before=state.cleared;state.board=state.board.map(c=>c===color?null:c);const next=new Array(64),count=config(state.currentLevel).colors;for(let x=0;x<8;x++){const col=[];for(let y=7;y>=0;y--){const v=state.board[y*8+x];if(v)col.push(v);}while(col.length<8)col.push(COLORS[Math.floor(Math.random()*count)]);for(let y=7;y>=0;y--)next[y*8+x]=col[7-y];}state.board=next;state.cleared+=Math.max(1,state.board.length?8:0);state.score+=800;state.boosterMode=null;renderBoard();updateGame();playSound("booster");toast("Color cleared.");if(state.cleared>=state.target)finish(true);}
 }
 el.play.addEventListener("click",showMap);el.back.addEventListener("click",showMap);el.mapButton.addEventListener("click",showMap);el.replay.addEventListener("click",()=>startLevel(state.currentLevel));el.next.addEventListener("click",()=>state.currentLevel<LEVEL_COUNT&&state.save.unlocked>state.currentLevel?startLevel(state.currentLevel+1):showMap());
 el.tutorialButton.addEventListener("click",()=>{state.save.tutorialSeen=true;save();el.tutorial.classList.add("hidden");});
