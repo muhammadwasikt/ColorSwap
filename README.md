@@ -8,10 +8,16 @@ A complete dependency-free color puzzle game built in the ColorSwap repository.
 - Real level map with locked/unlocked progression
 - Level switching and replay
 - 8x8 match-3 gameplay
-- Valid adjacent swaps only
-- Match detection in rows and columns
-- Cascading tile resolution
-- Combo scoring
+- 100 progressively authored level configurations
+- Level-specific move limits, tile targets and bonus objectives
+- Special gems from 4-match and 5-match patterns
+- Line-clearing horizontal/vertical specials
+- Color-bomb specials
+- Chain-reaction special detonations
+- Ice blockers that must be broken
+- Chain blockers that prevent direct movement until broken
+- Increasing blocker and special requirements across progression
+- Daily challenge with deterministic daily board, separate score and reward
 - Three-star level scoring
 - Persistent coins, stars, best scores and boosters
 - Shuffle, Hammer and Color Bomb boosters
@@ -28,7 +34,7 @@ No build step or package installation is required.
 
 ## Progression
 
-Level 1 is available on a new save. Completing a level unlocks the next level. Each level can earn up to three stars according to remaining moves.
+Level 1 is available on a new save. Completing a level unlocks the next level. Later levels introduce more colors, tighter move budgets, ice, chains and special-gem objectives. The daily challenge is a separate deterministic challenge and does not consume campaign unlocks.
 
 ## Ads
 
@@ -36,7 +42,7 @@ No fake ad UI is shipped. Real advertising should be connected only with a real 
 
 ## Save
 
-Progress is stored in browser localStorage under chromatic-shift-save-v1.
+Progress is stored in browser localStorage under chromatic-shift-save-v3.
 
 ## Game name
 
