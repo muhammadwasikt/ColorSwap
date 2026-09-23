@@ -15,7 +15,7 @@ function toast(msg){el.toast.textContent=msg;el.toast.classList.add("show");clea
 function config(level){
  const colors=level<=15?4:level<=40?5:6;
  const moves=Math.max(22,34-Math.floor((level-1)/12)*2);
- const target=46+Math.floor(level*1.55);
+ const target=60+Math.floor(level*1.65);
  return{level,size:8,colors,moves,target,difficulty:level<=10?"Warm-up":level<=30?"Flow":level<=60?"Focus":level<=85?"Expert":"Master"};
 }
 function rng(seed){let t=seed>>>0;return()=>{t+=0x6D2B79F5;let x=t;x=Math.imul(x^(x>>>15),x|1);x^=x+Math.imul(x^(x>>>7),x|61);return((x^(x>>>14))>>>0)/4294967296;};}
