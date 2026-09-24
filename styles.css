@@ -147,3 +147,5 @@ body{overscroll-behavior:none}
  .board-frame{padding:4px;border-radius:15px}.board{gap:2px;padding:4px;border-radius:11px}.tile{border-radius:7px}
  .booster-bar{gap:5px}.booster{min-height:43px;padding:5px 4px}.boost-icon{font-size:15px}.booster small{font-size:5.5px}
 }
+
+.game-head-right{display:flex;align-items:center;gap:10px}.combo-meter{padding:6px 8px;border-radius:999px;background:#12172c;border:1px solid var(--line);font-size:7px;letter-spacing:.09em;color:#737c9a;font-weight:950;opacity:.72;transition:.2s}.combo-meter b{color:#fff;font-size:11px;margin-left:2px}.combo-meter.hot{opacity:1;color:#ffd45a;border-color:#ffd45a66;box-shadow:0 0 18px #ffd45a22;animation:comboPulse .45s ease-out}@keyframes comboPulse{50%{transform:scale(1.08);box-shadow:0 0 24px #ff4f9a55}}@media(max-width:390px){.game-head-right{gap:6px}.combo-meter{font-size:6px;padding:5px 6px}.combo-meter b{font-size:10px}.score-box strong{font-size:21px}}
