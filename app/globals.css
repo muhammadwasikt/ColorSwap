@@ -151,3 +151,25 @@ button:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}
 }
+
+/* Mobile-game viewport hardening */
+.play-stage{height:100dvh;min-height:100dvh;overflow:hidden;touch-action:manipulation}
+.board-shell{min-height:0;overflow:visible}
+.board-frame{width:min(94vw,74dvh,620px);max-width:620px}
+.gem-cell{touch-action:none;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+.hero-play,.daily-home-card,.level-card,.booster-button,.top-icon,.modal-primary,.secondary-action{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media(max-width:700px){
+  .play-stage{height:100dvh}
+  .play-head{flex:0 0 auto}
+  .mission-panel,.goal-pills,.booster-dock{flex:0 0 auto}
+  .board-shell{flex:1;display:flex;align-items:center}
+  .board-frame{width:min(calc(100vw - 18px),calc(72dvh),580px)}
+}
+@media(max-width:430px){
+  .board-frame{width:min(calc(100vw - 18px),calc(56dvh),560px)}
+}
+@media(max-width:370px){
+  .play-head{gap:5px}.score-display strong{font-size:18px}.level-chip{padding:5px 7px}.combo-chip{padding:5px 6px}
+  .mission-copy strong{font-size:7px}.mission-values span{padding:4px 5px}
+  .board-frame{width:calc(100vw - 14px)}
+}
