@@ -190,3 +190,5 @@ body{overscroll-behavior:none}
  .board-frame{padding:5px}
  .board{gap:3px;padding:4px}
 }
+
+.home-actions,.home-actions .primary-button{position:relative;z-index:20;pointer-events:auto;touch-action:manipulation}.home-actions .primary-button{user-select:none;-webkit-tap-highlight-color:transparent}
