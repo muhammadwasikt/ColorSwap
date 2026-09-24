@@ -431,10 +431,6 @@ export default function Home() {
     };
   }, [toastMessage]);
 
-  useEffect(() => {
-    setPopups((current) => current.filter((popup) => popup.id > Date.now() - 900));
-  }, [popups]);
-
   const totalStars = useMemo(() => Object.values(stars).reduce((sum, value) => sum + value, 0), [stars]);
   const completedCount = useMemo(() => Object.keys(stars).length, [stars]);
   const currentBest = dailyMode ? dailyBest[todayKey()] || 0 : best[currentLevel] || 0;
@@ -896,9 +892,18 @@ export default function Home() {
     setBurstCells(Array.from({ length: CELL_COUNT }, (_, i) => i).filter((i) => board[i]?.color === targetColor));
     setTimeout(() => setBurstCells([]), 320);
     setBoard(next);
-    setCleared((value) => value + removed);
+    const nextCleared = cleared + removed;
+    setCleared(nextCleared);
     setScore((value) => value + removed * 100);
     showToast(`${removed} ${COLOR_LABEL[targetColor]} gems cleared.`, "good");
+    if (
+      nextCleared >= levelConfig.target &&
+      iceBroken >= levelConfig.ice &&
+      chainsBroken >= levelConfig.chains &&
+      specialsCreated >= levelConfig.specialGoal
+    ) {
+      finishLevel(true, moves, score + removed * 100, nextCleared, iceBroken, chainsBroken, specialsCreated);
+    }
   }
 
   function mapNextLevel() {
