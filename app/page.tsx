@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 
 type Color = "red" | "yellow" | "green" | "blue" | "purple" | "cyan";
 type Special = "lineH" | "lineV" | "bomb" | "wrapped" | null;
@@ -253,8 +253,8 @@ function areAdjacent(a: number, b: number) {
   return Math.abs((a % SIZE) - (b % SIZE)) + Math.abs(Math.floor(a / SIZE) - Math.floor(b / SIZE)) === 1;
 }
 
-function cloneBoard(board: (Cell | null)[]) {
-  return board.map((cell) => (cell ? { ...cell } : null));
+function cloneBoard(board: Cell[]) {
+  return board.map((cell) => ({ ...cell }));
 }
 
 function chooseCreatedSpecial(groups: MatchGroup[], moveTo: number): { index: number; special: Special } | null {
@@ -327,10 +327,12 @@ function specialComboBlast(
 
   if ((sa === "bomb" && sb === "wrapped") || (sa === "wrapped" && sb === "bomb")) {
     const bombIndex = sa === "bomb" ? a : b;
+    const wrappedIndex = sa === "wrapped" ? a : b;
     const bombColor = board[bombIndex]?.color;
     if (bombColor) {
-      for (let i = 0; i < CELL_COUNT; i++) if (board[i]?.color === bombColor) addBlastForSpecial(board, i, queue);
+      for (let i = 0; i < CELL_COUNT; i++) if (board[i]?.color === bombColor) queue.add(i);
     }
+    addBlastForSpecial(board, wrappedIndex, queue, "mega");
     return true;
   }
 
@@ -583,7 +585,7 @@ export default function Home() {
     const dx = toX - fromX;
     const dy = toY - fromY;
     const multiplier = index === swapAnim.from ? 1 : -1;
-    return { "--swap-x": `${dx * 100 * multiplier}%`, "--swap-y": `${dy * 100 * multiplier}%` } as React.CSSProperties;
+    return { "--swap-x": `${dx * 100 * multiplier}%`, "--swap-y": `${dy * 100 * multiplier}%` } as CSSProperties;
   }
 
   async function performSwap(from: number, to: number) {
@@ -727,7 +729,7 @@ export default function Home() {
         }
       }
 
-      current = next;
+      current = next as Cell[];
       setBoard(current);
       setFallingIds(falling);
       await sleep(360);
@@ -853,7 +855,7 @@ export default function Home() {
     if (!boosterMode || busy) return;
     const type = boosterMode;
     setBoosterMode(null);
-    const next = cloneBoard(board);
+    const next = cloneBoard(board) as (Cell | null)[];
 
     if (type === "hammer") {
       next[index] = {
