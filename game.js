@@ -82,6 +82,15 @@ function chooseSpecial(groups,anchor){
  }
  return chosen
 }
+function spawnBurst(index){
+ const node=el.board.children[index];if(!node)return;
+ const boardRect=el.board.getBoundingClientRect(),rect=node.getBoundingClientRect(),host=el.board.parentElement;
+ const baseX=rect.left-boardRect.left+rect.width/2,baseY=rect.top-boardRect.top+rect.height/2;
+ for(let n=0;n<4;n++){
+  const p=document.createElement("i");p.className="fx-particle";p.dataset.color=state.board[index]||"purple";p.style.left=baseX+"px";p.style.top=baseY+"px";
+  const angle=(Math.PI*2*n/4)+Math.random()*.5,speed=18+Math.random()*28;p.style.setProperty("--px",Math.cos(angle)*speed+"px");p.style.setProperty("--py",Math.sin(angle)*speed+"px");host.appendChild(p);setTimeout(()=>p.remove(),650)
+ }
+}
 async function resolve(initialGroups,anchor=null){
  let groups=initialGroups;
  while(groups.length){
@@ -90,7 +99,7 @@ async function resolve(initialGroups,anchor=null){
   if(special){queue.delete(special.index);state.specials[special.index]=special.type;state.specialsCreated++;playSound("special")}
   const pending=[...queue],expanded=new Set(queue);
   for(let p=0;p<pending.length;p++){const idx=pending[p];if(state.specials[idx]){const before=expanded.size;specialBlast(idx,expanded);if(expanded.size>before)expanded.forEach(v=>{if(!pending.includes(v))pending.push(v)})}}
-  expanded.forEach(i=>{if(el.board.children[i])el.board.children[i].classList.add("clearing")});
+  expanded.forEach(i=>{if(el.board.children[i]){spawnBurst(i);el.board.children[i].classList.add("clearing")}});
   el.board.classList.remove("blast");void el.board.offsetWidth;el.board.classList.add("blast");
   await wait(310);
   expanded.forEach(i=>{if(state.board[i]){state.cleared++;state.score+=100*state.combo;state.board[i]=null;if(state.specials[i])state.specials[i]=null;damageBlocker(i)}});
