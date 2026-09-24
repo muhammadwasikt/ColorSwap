@@ -1,15 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Chromatic Shift — Color Puzzle Adventure",
   description: "A polished, responsive match-3 puzzle game.",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    viewportFit: "cover"
-  },
-  themeColor: "#070914"
+  themeColor: "#060814"
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
