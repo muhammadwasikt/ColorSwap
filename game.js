@@ -37,9 +37,9 @@ function getGroups(board){
  return groups
 }
 function matchedSet(groups){const s=new Set();groups.forEach(g=>g.cells.forEach(i=>s.add(i)));return [...s]}
-function renderBoard(){
+function renderBoard(falling=false){
  el.board.innerHTML="";
- state.board.forEach((color,i)=>{const b=document.createElement("button"),sp=state.specials[i],block=state.blockers[i];b.className="tile"+(state.selected===i?" selected":"")+(block?" blocked "+block:"")+(sp?" special "+sp:"");b.dataset.color=color;b.setAttribute("aria-label",`Tile ${i+1}, ${color}${sp?" "+sp:""}${block?" "+block:""}`);if(sp==="lineH")b.innerHTML='<span class="special-mark">↔</span>';else if(sp==="lineV")b.innerHTML='<span class="special-mark">↕</span>';else if(sp==="bomb")b.innerHTML='<span class="special-mark">✦</span>';if(block)b.innerHTML+=(block==="ice"?'<span class="blocker-mark">❄</span>':'<span class="blocker-mark chain-mark">⛓</span>');b.addEventListener("click",()=>tileClick(i));el.board.appendChild(b)})
+ state.board.forEach((color,i)=>{const b=document.createElement("button"),sp=state.specials[i],block=state.blockers[i];b.className="tile"+(state.selected===i?" selected":"")+(block?" blocked "+block:"")+(sp?" special "+sp:"")+(falling?" falling":"");b.dataset.color=color;b.setAttribute("aria-label",`Tile ${i+1}, ${color}${sp?" "+sp:""}${block?" "+block:""}`);if(sp==="lineH")b.innerHTML='<span class="special-mark">↔</span>';else if(sp==="lineV")b.innerHTML='<span class="special-mark">↕</span>';else if(sp==="bomb")b.innerHTML='<span class="special-mark">✦</span>';if(block)b.innerHTML+=(block==="ice"?'<span class="blocker-mark">❄</span>':'<span class="blocker-mark chain-mark">⛓</span>');b.addEventListener("click",()=>tileClick(i));el.board.appendChild(b)})
 }
 function playSound(type){
  if(!window.AudioContext&&!window.webkitAudioContext)return;try{const C=window.AudioContext||window.webkitAudioContext,ctx=state.audioCtx||(state.audioCtx=new C());if(ctx.state==="suspended")ctx.resume();const master=ctx.createGain();master.gain.value=.22;master.connect(ctx.destination);const presets={tap:[[420,.055,"sine",0]],swap:[[260,.08,"triangle",0],[390,.07,"sine",.025]],match:[[520,.09,"sine",0],[780,.11,"sine",.035]],combo:[[620,.10,"triangle",0],[930,.12,"sine",.05],[1240,.14,"sine",.10]],special:[[680,.09,"square",0],[1020,.13,"triangle",.06],[1360,.17,"sine",.12]],win:[[523,.14,"sine",0],[659,.16,"sine",.10],[784,.22,"triangle",.22],[1047,.30,"sine",.36]],fail:[[220,.14,"sawtooth",0],[150,.24,"triangle",.08]],booster:[[700,.10,"square",0],[980,.14,"triangle",.07]]};const now=ctx.currentTime;(presets[type]||presets.tap).forEach(([freq,dur,wave,delay])=>{const o=ctx.createOscillator(),g=ctx.createGain(),t=now+delay;o.type=wave;o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*1.35,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.85,t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur+.03)});if(navigator.vibrate)navigator.vibrate(type==="match"?10:type==="combo"?[10,20,15]:type==="special"?[12,20,18]:type==="win"?[15,35,25]:type==="fail"?35:6)}catch(e){}
@@ -61,6 +61,19 @@ function specialBlast(index,queue){
  else if(sp==="lineV")for(let y=0;y<8;y++)queue.add(y*8+(index%8));
  else if(sp==="bomb"){const color=state.board[index];for(let i=0;i<64;i++)if(state.board[i]===color)queue.add(i)}
 }
+function specialCombo(a,b,queue){
+ const sa=state.specials[a],sb=state.specials[b];if(!sa||!sb)return false;
+ if(sa==="bomb"&&sb==="bomb"){for(let i=0;i<64;i++)queue.add(i);return true}
+ if(sa==="bomb"||sb==="bomb"){const idx=sa==="bomb"?b:a;for(let y=Math.max(0,Math.floor(idx/8)-1);y<=Math.min(7,Math.floor(idx/8)+1);y++)for(let x=0;x<8;x++)queue.add(y*8+x);for(let x=Math.max(0,idx%8-1);x<=Math.min(7,idx%8+1);x++)for(let y=0;y<8;y++)queue.add(y*8+x);return true}
+ specialBlast(a,queue);specialBlast(b,queue);return true
+}
+async function animateSwap(a,b){
+ const first=el.board.children[a],second=el.board.children[b];if(!first||!second)return;
+ const dx=b%8-a%8,dy=Math.floor(b/8)-Math.floor(a/8);
+ first.style.setProperty("--sx",dx);first.style.setProperty("--sy",dy);
+ second.style.setProperty("--sx",-dx);second.style.setProperty("--sy",-dy);
+ first.classList.add("swapping");second.classList.add("swapping");await wait(175);
+}
 function chooseSpecial(groups,anchor){
  let chosen=null;
  for(const g of groups){
@@ -78,9 +91,10 @@ async function resolve(initialGroups,anchor=null){
   const pending=[...queue],expanded=new Set(queue);
   for(let p=0;p<pending.length;p++){const idx=pending[p];if(state.specials[idx]){const before=expanded.size;specialBlast(idx,expanded);if(expanded.size>before)expanded.forEach(v=>{if(!pending.includes(v))pending.push(v)})}}
   expanded.forEach(i=>{if(el.board.children[i])el.board.children[i].classList.add("clearing")});
-  await wait(220);
+  el.board.classList.remove("blast");void el.board.offsetWidth;el.board.classList.add("blast");
+  await wait(310);
   expanded.forEach(i=>{if(state.board[i]){state.cleared++;state.score+=100*state.combo;state.board[i]=null;if(state.specials[i])state.specials[i]=null;damageBlocker(i)}});
-  gravity();renderBoard();updateGame();await wait(120);groups=getGroups(state.board);anchor=null
+  gravity();renderBoard(true);updateGame();await wait(360);groups=getGroups(state.board);anchor=null
  }
  if(state.combo>=4)toast("UNSTOPPABLE!");else if(state.combo===3)toast("SUPER COMBO!");else if(state.combo===2)toast("COMBO!")
 }
@@ -100,10 +114,10 @@ async function tileClick(i){
  if(i===state.selected){state.selected=null;renderBoard();return}
  if(!adjacent(state.selected,i)){state.selected=i;renderBoard();return}
  const a=state.selected,b=i;if(state.blockers[a]==="chain"||state.blockers[b]==="chain"){state.selected=null;renderBoard();toast("Chained gems cannot move.");return}
- state.selected=null;state.busy=true;playSound("swap");[state.board[a],state.board[b]]=[state.board[b],state.board[a]];[state.specials[a],state.specials[b]]=[state.specials[b],state.specials[a]];renderBoard();await wait(90);
+ state.selected=null;state.busy=true;playSound("swap");await animateSwap(a,b);[state.board[a],state.board[b]]=[state.board[b],state.board[a]];[state.specials[a],state.specials[b]]=[state.specials[b],state.specials[a]];renderBoard();await wait(40);
  let groups=getGroups(state.board);
- const specialSwap=state.specials[a]||state.specials[b];
- if(specialSwap==="bomb"){const color=state.board[a]||state.board[b];groups=[{cells:[...Array(64).keys()].filter(i=>state.board[i]===color),dir:"h",len:5}]}
+ const specialSwap=state.specials[a]&&state.specials[b];
+ if(specialSwap){const queue=new Set();specialCombo(a,b,queue);groups=[{cells:[...queue],dir:"h",len:Math.max(5,queue.size),color:state.board[a]}]}
  if(!groups.length){[state.board[a],state.board[b]]=[state.board[b],state.board[a]];[state.specials[a],state.specials[b]]=[state.specials[b],state.specials[a]];state.mistakes++;renderBoard();updateGame();playSound("fail");if(state.mistakes>=MAX_MISTAKES){state.busy=false;finish(false);return}state.busy=false;toast(`Wrong swap! ${MAX_MISTAKES-state.mistakes} left.`);return}
  state.moves--;state.successfulMoves++;await resolve(groups,b);state.busy=false;updateGame();const cfg=state.daily?dailyCfg():config(state.currentLevel);if(objectiveComplete(cfg))finish(true);else if(state.moves<=0)finish(false)
 }
@@ -135,8 +149,8 @@ function useBooster(type){
 }
 function useBoosterOnTile(index){
  const type=state.boosterMode;if(!type)return;
- if(type==="hammer"){state.board[index]=COLORS[Math.floor(Math.random()*config(state.currentLevel).colors)];if(state.blockers[index])damageBlocker(index);state.boosterMode=null;renderBoard();playSound("booster");toast("Hammer smash!")}
- else{const color=state.board[index],removed=state.board.filter(c=>c===color).length;for(let i=0;i<64;i++)if(state.board[i]===color){state.board[i]=null;state.specials[i]=null;damageBlocker(i)}gravity();state.cleared+=removed;state.score+=removed*100;state.boosterMode=null;renderBoard();updateGame();playSound("booster");toast(`${removed} ${color} gems cleared.`);const cfg=state.daily?dailyCfg():config(state.currentLevel);if(objectiveComplete(cfg))finish(true)}
+ if(type==="hammer"){const cfg=state.daily?dailyCfg():config(state.currentLevel);state.board[index]=COLORS[Math.floor(Math.random()*cfg.colors)];if(state.blockers[index])damageBlocker(index);state.boosterMode=null;renderBoard();playSound("booster");toast("Hammer smash!")}
+ else{const color=state.board[index],removed=state.board.filter(c=>c===color).length;for(let i=0;i<64;i++)if(state.board[i]===color){state.board[i]=null;state.specials[i]=null;damageBlocker(i)}gravity();state.cleared+=removed;state.score+=removed*100;state.boosterMode=null;renderBoard(true);updateGame();playSound("booster");toast(`${removed} ${color} gems cleared.`);const cfg=state.daily?dailyCfg():config(state.currentLevel);if(objectiveComplete(cfg))finish(true)}
 }
 el.play.addEventListener("click",showMap);el.back.addEventListener("click",()=>state.screen==="game"||state.screen==="result"?showMap():showScreen("home"));el.mapButton.addEventListener("click",showMap);el.replay.addEventListener("click",()=>startLevel(state.currentLevel,state.daily));el.next.addEventListener("click",()=>state.daily?showMap():(state.currentLevel<LEVEL_COUNT&&state.save.unlocked>state.currentLevel?startLevel(state.currentLevel+1):showMap()));el.daily.addEventListener("click",()=>{if(state.save.dailyCompleted[todayKey()]){toast("Daily challenge completed. Come back tomorrow.");return}startLevel(dailyLevel(),true)});el.tutorialButton.addEventListener("click",()=>{state.save.tutorialSeen=true;save();el.tutorial.classList.add("hidden")});el.boosterCancel.addEventListener("click",()=>{state.pendingBooster=null;el.boosterModal.classList.add("hidden")});el.boosterConfirm.addEventListener("click",()=>useBooster(state.pendingBooster));document.querySelectorAll(".booster").forEach(b=>b.addEventListener("click",()=>askBooster(b.dataset.booster)));if(!state.save.tutorialSeen)el.tutorial.classList.remove("hidden");showScreen("home");
 })();
