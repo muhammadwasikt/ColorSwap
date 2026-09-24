@@ -149,3 +149,44 @@ body{overscroll-behavior:none}
 }
 
 .game-head-right{display:flex;align-items:center;gap:10px}.combo-meter{padding:6px 8px;border-radius:999px;background:#12172c;border:1px solid var(--line);font-size:7px;letter-spacing:.09em;color:#737c9a;font-weight:950;opacity:.72;transition:.2s}.combo-meter b{color:#fff;font-size:11px;margin-left:2px}.combo-meter.hot{opacity:1;color:#ffd45a;border-color:#ffd45a66;box-shadow:0 0 18px #ffd45a22;animation:comboPulse .45s ease-out}@keyframes comboPulse{50%{transform:scale(1.08);box-shadow:0 0 24px #ff4f9a55}}@media(max-width:390px){.game-head-right{gap:6px}.combo-meter{font-size:6px;padding:5px 6px}.combo-meter b{font-size:10px}.score-box strong{font-size:21px}}
+
+/* Final game-stage layout: board is always the hero */
+.game-screen{width:100%;max-width:780px;margin:0 auto;padding-top:18px}
+.game-screen .board-frame{width:min(100%,560px);margin:10px auto 0}
+.game-screen .booster-bar{width:min(100%,560px);margin-left:auto;margin-right:auto}
+.game-screen:before{content:"";position:fixed;inset:68px 0 0;pointer-events:none;z-index:-1;background:radial-gradient(circle at 50% 42%,#765cff12,transparent 32%),radial-gradient(circle at 20% 25%,#42e8ff08,transparent 25%),radial-gradient(circle at 80% 70%,#ff4f9a07,transparent 28%)}
+.board-frame{background:linear-gradient(145deg,#3b4264 0%,#171c35 16%,#0d1122 100%);border:1px solid #ffffff1c}
+.board{background:radial-gradient(circle at 50% 30%,#1a2040,#070a15 72%);border:1px solid #ffffff10}
+.tile{border-radius:36%;}
+.tile[data-color=red]{border-radius:45% 55% 50% 42%}
+.tile[data-color=yellow]{border-radius:52% 48% 43% 57%}
+.tile[data-color=green]{border-radius:43% 57% 51% 49%}
+.tile[data-color=blue]{border-radius:52% 48% 56% 44%}
+.tile[data-color=purple]{border-radius:46% 54% 42% 58%}
+.tile[data-color=cyan]{border-radius:55% 45% 52% 48%}
+.tile:before{mix-blend-mode:screen}
+.tile:after{filter:blur(.2px)}
+@media(min-width:701px){
+ .game-screen{padding-top:20px}
+ .game-head{margin-bottom:11px}
+ .mission-card{margin-bottom:10px}
+ .goal-strip{margin-bottom:10px}
+ .board-frame{padding:12px}
+ .board{gap:7px;padding:8px}
+ .tile{border-radius:38%}
+}
+@media(max-width:700px){
+ .game-screen{max-width:none;margin:0;padding-top:8px}
+ .game-screen:before{inset:58px 0 0}
+ .game-screen .board-frame{width:100%;margin-top:7px}
+ .game-screen .booster-bar{width:100%}
+}
+@media(max-width:430px){
+ .game-screen{padding-top:5px}
+ .game-head{margin-bottom:6px}
+ .mission-card{margin-bottom:6px}
+ .goal-strip{margin-bottom:6px}
+ .game-screen .board-frame{margin-top:4px}
+ .board-frame{padding:5px}
+ .board{gap:3px;padding:4px}
+}
