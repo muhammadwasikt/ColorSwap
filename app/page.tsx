@@ -868,7 +868,7 @@ export default function Home() {
       };
       if (board[index]?.blocker === "ice") setIceBroken((value) => value + 1);
       if (board[index]?.blocker === "chain") setChainsBroken((value) => value + 1);
-      setBoard(next);
+      setBoard(next as Cell[]);
       showToast("Hammer smash!", "good");
       return;
     }
@@ -895,7 +895,7 @@ export default function Home() {
     }
     setBurstCells(Array.from({ length: CELL_COUNT }, (_, i) => i).filter((i) => board[i]?.color === targetColor));
     setTimeout(() => setBurstCells([]), 320);
-    setBoard(next);
+    setBoard(next as Cell[]);
     const nextCleared = cleared + removed;
     setCleared(nextCleared);
     setScore((value) => value + removed * 100);
