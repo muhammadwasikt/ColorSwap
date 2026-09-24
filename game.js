@@ -164,8 +164,8 @@ function useBoosterOnTile(index){
  if(type==="hammer"){const cfg=state.daily?dailyCfg():config(state.currentLevel);state.board[index]=COLORS[Math.floor(Math.random()*cfg.colors)];if(state.blockers[index])damageBlocker(index);state.boosterMode=null;renderBoard();playSound("booster");toast("Hammer smash!")}
  else{const color=state.board[index],removed=state.board.filter(c=>c===color).length;for(let i=0;i<64;i++)if(state.board[i]===color){state.board[i]=null;state.specials[i]=null;damageBlocker(i)}gravity();state.cleared+=removed;state.score+=removed*100;state.boosterMode=null;renderBoard(true);updateGame();playSound("booster");toast(`${removed} ${color} gems cleared.`);const cfg=state.daily?dailyCfg():config(state.currentLevel);if(objectiveComplete(cfg))finish(true)}
 }
+window.__chromaticPlay=function(){showMap()};
 function handlePlay(){
- if(state.busy)return;
  state.busy=true;
  try{showMap()}finally{state.busy=false}
 }
