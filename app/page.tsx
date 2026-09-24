@@ -1085,7 +1085,7 @@ export default function Home() {
       {renderTopbar(true)}
       <section className="play-head">
         <div className="level-chip"><span>LEVEL</span><strong>{displayLevel}</strong><em>{levelConfig.difficulty}</em></div>
-        <div className="combo-chip ${combo >= 2 ? "hot" : ""}">COMBO ×<b>{Math.max(1, combo)}</b></div>
+        <div className={`combo-chip ${combo >= 2 ? "hot" : ""}`}>COMBO ×<b>{Math.max(1, combo)}</b></div>
         <div className="score-display"><small>SCORE</small><strong>{score.toLocaleString()}</strong></div>
       </section>
       <section className="mission-panel">
