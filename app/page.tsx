@@ -858,8 +858,10 @@ export default function Home() {
     const next = cloneBoard(board) as (Cell | null)[];
 
     if (type === "hammer") {
+      const target = next[index];
+      if (!target) return;
       next[index] = {
-        ...next[index],
+        ...target,
         color: COLORS[Math.floor(Math.random() * levelConfig.colors)],
         special: null,
         blocker: null
