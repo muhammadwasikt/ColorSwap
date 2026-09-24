@@ -1,43 +1,54 @@
 # Chromatic Shift
 
-A complete dependency-free color puzzle game built in the ColorSwap repository.
+Chromatic Shift is a React/Next.js match-3 puzzle game designed as a mobile-first web game rather than a traditional website.
 
-## Functional game systems
+## Game systems
 
-- 100 playable levels
-- Real level map with locked/unlocked progression
-- Level switching and replay
-- 8x8 match-3 gameplay
-- Valid adjacent swaps only
-- Match detection in rows and columns
-- Cascading tile resolution
-- Combo scoring
-- Three-star level scoring
-- Persistent coins, stars, best scores and boosters
+- 100 campaign levels with progressive difficulty and world themes
+- Responsive 8x8 match-3 board sized from the actual viewport
+- Tap or swipe-to-swap interaction
+- Smooth swap, burst, falling and cascade animations
+- Glossy 3D-style gem rendering using layered CSS
+- Match-4 Line Gems
+- Match-5 Color Bombs
+- L/T intersection Wrapped Gems
+- Special + Special combinations
+- Ice and Chain blockers
+- Move limits, score, combo feedback and three-star rewards
 - Shuffle, Hammer and Color Bomb boosters
+- Persistent local progress
+- Daily Chromatic Trial with a deterministic daily board
+- Web Audio feedback and haptic feedback where supported
 - First-run tutorial
-- Responsive mobile and desktop UI
-- Local progress persistence
-- No dummy pages, fake game states, placeholder buttons or simulated ad completions
+- No fake advertisements or simulated ad rewards
+
+## Tech
+
+- Next.js App Router
+- React
+- TypeScript
+- CSS only for the visual system; no external UI framework required
 
 ## Run
 
-Open index.html directly, or serve the repository from any static web server.
+```bash
+npm install
+npm run dev
+```
 
-No build step or package installation is required.
+For a production build:
 
-## Progression
+```bash
+npm run build
+npm start
+```
 
-Level 1 is available on a new save. Completing a level unlocks the next level. Each level can earn up to three stars according to remaining moves.
+## Monetization
 
-## Ads
+Advertising is intentionally not included yet. A real ad provider can be integrated later with verified callbacks for any rewarded gameplay benefit.
 
-No fake ad UI is shipped. Real advertising should be connected only with a real publisher/account configuration. The game must never grant an advertising reward without a verified successful ad callback.
+## Save data
 
-## Save
+Campaign progress, stars, best scores, coins, boosters and daily challenge state are stored in browser localStorage under:
 
-Progress is stored in browser localStorage under chromatic-shift-save-v1.
-
-## Game name
-
-The player-facing name is **Chromatic Shift**. The repository name remains **ColorSwap** as requested.
+`chromatic-shift-next-v1`
